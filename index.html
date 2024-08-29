@@ -352,9 +352,9 @@
             const totalCostsDiv = document.getElementById('totalCosts');
             totalCostsDiv.innerHTML = `
                 <p><strong>סך ההוצאה לאורך 20 שנים:</strong></p>
-                <p>הצעה 1: ${totalFees1.toFixed(2)} ₪</p>
-                <p>הצעה 2: ${totalFees2.toFixed(2)} ₪</p>
-                <p><strong>סך ההוצאה האופטימלית:</strong> ${optimalTotalFees.toFixed(2)} ₪</p>
+		<p>הצעה 1: ${Math.round(totalFees1)} ₪</p>
+		<p>הצעה 2: ${Math.round(totalFees2)} ₪</p>
+		<p><strong>סך ההוצאה האופטימלית:</strong> ${Math.round(optimalTotalFees)} ₪</p>
                 <p><strong>המלצה:</strong></p>
                 ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
                 <p>להתייעצות נוספת על השימוש במחשבון, לחצו על הקישור לוואטסאפ שנמצא בצד.</p>
@@ -370,14 +370,15 @@
             if (crossingYear) {
                 recommendationText += `
                     <p>המסלול האופטימלי הוא להתחיל בהצעה 2 ולעבור להצעה 1 בעוד ${crossingYear} שנים.</p>
-                    <p>סך התשלום במקרה זה יהיה ${optimalFees.toFixed(2)} ₪.</p>
-                    <p>בהשוואה להצעה 1 בלבד, יש חיסכון של ${(fees1 - optimalFees).toFixed(2)} ₪.</p>
-                    <p>בהשוואה להצעה 2 בלבד, יש חיסכון של ${(fees2 - optimalFees).toFixed(2)} ₪.</p>
+<p>סך התשלום במקרה זה יהיה ${Math.round(optimalFees)} ₪.</p>
+		  <p>בהשוואה להצעה 1 בלבד, יש חיסכון של ${Math.round(fees1 - optimalFees)} ₪.</p>
+		  <p>בהשוואה להצעה 2 בלבד, יש חיסכון של ${Math.round(fees2 - optimalFees)} ₪.</p>
                 `;
             } else {
                 let bestScenario = fees1 < fees2 ? 'הצעה 1' : 'הצעה 2';
                 recommendationText += `
-                    <p>המסלול שהכי טוב באופן עקבי הוא ${bestScenario}, עם סך תשלום של ${Math.min(fees1, fees2).toFixed(2)} ₪.</p>
+                    <p>המסלול שהכי טוב באופן עקבי הוא ${bestScenario}, עם סך תשלום של ${Math.round(Math.min(fees1, fees2))} ₪.</p>
+
                 `;
             }
 
