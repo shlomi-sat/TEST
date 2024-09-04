@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מחשבון דמי ניהול פנסיה</title>
     <style>
+	.banner {
+    		background-image: url('baner.jpg'); /* עדכן לנתיב הנכון של התמונה */
+    		background-size: cover;
+    		background-position: center;
+    		height: 200px;
+    		margin-bottom: 20px;
+   		border-radius: 8px;
+	}
+
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -109,12 +118,7 @@
             height: 400px; /* גובה פרופורציוני לגרף */
             margin-top: 20px;
         }
-        .whatsapp-button {
-            position: fixed;
-            bottom: 10px; /* הגדלת המרחק מהתחתית */
-            right: 20px;
-            z-index: 1000;
-        }
+
         .whatsapp-button a {
             display: inline-block;
             padding: 15px;
@@ -132,6 +136,25 @@
             margin-top: 20px;
             padding-bottom: 100px; /* מרווח נוסף כדי לאפשר מרחק מהסוף */
         }
+.social-icons {
+    position: fixed;
+    bottom: 10px; /* המרחק מהתחתית */
+    left: 50%; /* יישור אופקי */
+    transform: translateX(-50%); /* מבטיח שהאייקונים יהיו במרכז הדף */
+    display: flex;
+    justify-content: center;
+}
+
+.social-icons a {
+    margin: 0 10px;
+}
+
+.social-icons img {
+    width: 50px;
+    height: 50px;
+}
+
+
     </style>
 </head>
 <body>
@@ -146,6 +169,7 @@
     </script>
 
     <div class="container">
+	<div class="banner"></div> <!-- הוספת תמונת הבאנר -->
         <div class="language-switcher">
             <a href="#" onclick="setLanguage('he'); return false;" id="lang-he">עברית</a>
             <a href="#" onclick="setLanguage('en'); return false;" id="lang-en">English</a>
@@ -189,12 +213,17 @@
             <div id="charts">
                 <canvas id="feeChart"></canvas>
                 <div id="totalCosts"></div> <!-- הוספת אלמנט להצגת סך ההוצאות -->
-            </div>
-            
-            <div class="whatsapp-button">
-                <a id="whatsapp-link" href="https://wa.me/972502638644?text=אני זקוק לעזרה עם המחשבון.">&#x1F4AC;</a>
-            </div>
-        </div>
+
+<div class="social-icons">
+    <a href="https://wa.me/972502638644?text=אני זקוק לעזרה עם המחשבון." target="_blank">
+        <img src="whatsapp.svg" alt="WhatsApp" width="50" height="50">
+    </a>
+    <a href="https://www.facebook.com/share/g/mPAmG2d9e9rxjPxm/" target="_blank">
+        <img src="facebook.svg" alt="Facebook" width="50" height="50">
+    </a>
+</div>
+
+
     </div>
     
     <!-- Chart.js Library -->
@@ -357,7 +386,8 @@
 		<p><strong>סך ההוצאה האופטימלית:</strong> ${Math.round(optimalTotalFees)} ₪</p>
                 <p><strong>המלצה:</strong></p>
                 ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
-                <p>להתייעצות נוספת על השימוש במחשבון, לחצו על הקישור לוואטסאפ שנמצא בצד.</p>
+                <p>לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.</p>
+                <p>להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור לפייסבוק.</p>
             `;
 
             // עדכון שמות הצירים בהתאם לשפה הנבחרת לאחר יצירת הגרף
