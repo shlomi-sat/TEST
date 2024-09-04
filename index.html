@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מחשבון דמי ניהול פנסיה</title>
+
+    <!-- תגי מטא עבור שיתוף -->
+    <meta property="og:title" content="מחשבון דמי ניהול פנסיה" />
+    <meta property="og:description" content="שימוש במחשבון לחישוב דמי ניהול פנסיה ולהשוואה בין הצעות שונות." />
+    <meta property="og:image" content="https://example.com/path-to-your-image/baner.jpg" />
+    <meta property="og:url" content="https://example.com/your-calculator-page" />
+    <meta name="twitter:card" content="summary_large_image" />
+
     <style>
 	.banner {
     		background-image: url('baner.jpg'); /* עדכן לנתיב הנכון של התמונה */
@@ -276,123 +284,126 @@
             document.getElementById('lang-he').classList.toggle('active', isHebrew);
             document.getElementById('lang-en').classList.toggle('active', !isHebrew);
         }
+function formatNumberWithCommas(num) {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
-        function calculateFees() {
-            // Get inputs
-            const initialBalance = parseFloat(document.getElementById('initialBalance').value);
-            const monthlyDeposit = parseFloat(document.getElementById('monthlyDeposit').value);
-            const adminFeeAcc1 = parseFloat(document.getElementById('adminFeeAcc1').value) / 100;
-            const adminFeeDep1 = parseFloat(document.getElementById('adminFeeDep1').value) / 100;
-            const adminFeeAcc2 = parseFloat(document.getElementById('adminFeeAcc2').value) / 100;
-            const adminFeeDep2 = parseFloat(document.getElementById('adminFeeDep2').value) / 100;
-            
-            const years = 20;
-            const monthsPerYear = 12;
-            
-            // Initialize arrays for chart
-            let fees1 = [];
-            let fees2 = [];
-            
-            let balance1 = initialBalance;
-            let balance2 = initialBalance;
+function calculateFees() {
+    // Get inputs
+    const initialBalance = parseFloat(document.getElementById('initialBalance').value);
+    const monthlyDeposit = parseFloat(document.getElementById('monthlyDeposit').value);
+    const adminFeeAcc1 = parseFloat(document.getElementById('adminFeeAcc1').value) / 100;
+    const adminFeeDep1 = parseFloat(document.getElementById('adminFeeDep1').value) / 100;
+    const adminFeeAcc2 = parseFloat(document.getElementById('adminFeeAcc2').value) / 100;
+    const adminFeeDep2 = parseFloat(document.getElementById('adminFeeDep2').value) / 100;
+    
+    const years = 20;
+    const monthsPerYear = 12;
+    
+    // Initialize arrays for chart
+    let fees1 = [];
+    let fees2 = [];
+    
+    let balance1 = initialBalance;
+    let balance2 = initialBalance;
 
-            let totalFees1 = 0;
-            let totalFees2 = 0;
+    let totalFees1 = 0;
+    let totalFees2 = 0;
 
-            let crossingYear = null; // לשמור את שנת המפגש
-            
-            for (let year = 1; year <= years; year++) {
-                let annualFee1 = balance1 * adminFeeAcc1 + monthlyDeposit * monthsPerYear * adminFeeDep1;
-                let annualFee2 = balance2 * adminFeeAcc2 + monthlyDeposit * monthsPerYear * adminFeeDep2;
-                
-                fees1.push(annualFee1);
-                fees2.push(annualFee2);
-                
-                totalFees1 += annualFee1;
-                totalFees2 += annualFee2;
+    let crossingYear = null;
+    
+    for (let year = 1; year <= years; year++) {
+        let annualFee1 = balance1 * adminFeeAcc1 + monthlyDeposit * monthsPerYear * adminFeeDep1;
+        let annualFee2 = balance2 * adminFeeAcc2 + monthlyDeposit * monthsPerYear * adminFeeDep2;
+        
+        fees1.push(annualFee1);
+        fees2.push(annualFee2);
+        
+        totalFees1 += annualFee1;
+        totalFees2 += annualFee2;
 
-                balance1 = (balance1 + monthlyDeposit * monthsPerYear) * (1 - adminFeeAcc1);
-                balance2 = (balance2 + monthlyDeposit * monthsPerYear) * (1 - adminFeeAcc2);
+        balance1 = (balance1 + monthlyDeposit * monthsPerYear) * (1 - adminFeeAcc1);
+        balance2 = (balance2 + monthlyDeposit * monthsPerYear) * (1 - adminFeeAcc2);
 
-                // חישוב נקודת מפגש
-                if (year > 1 && crossingYear === null) {
-                    if ((fees1[year - 2] > fees2[year - 2] && fees1[year - 1] < fees2[year - 1]) || (fees1[year - 2] < fees2[year - 2] && fees1[year - 1] > fees2[year - 1])) {
-                        crossingYear = year;
+        if (year > 1 && crossingYear === null) {
+            if ((fees1[year - 2] > fees2[year - 2] && fees1[year - 1] < fees2[year - 1]) || (fees1[year - 2] < fees2[year - 2] && fees1[year - 1] > fees2[year - 1])) {
+                crossingYear = year;
+            }
+        }
+    }
+
+    let optimalTotalFees;
+    if (crossingYear) {
+        let feesBeforeCrossing = fees2.slice(0, crossingYear).reduce((a, b) => a + b, 0);
+        let feesAfterCrossing = fees1.slice(crossingYear).reduce((a, b) => a + b, 0);
+        optimalTotalFees = feesBeforeCrossing + feesAfterCrossing;
+    } else {
+        optimalTotalFees = Math.min(totalFees1, totalFees2);
+    }
+
+    const totalCostsDiv = document.getElementById('totalCosts');
+    totalCostsDiv.innerHTML = `
+        <p><strong>סך ההוצאה לאורך 20 שנים:</strong></p>
+        <p>הצעה 1: ${formatNumberWithCommas(Math.round(totalFees1))} ₪</p>
+        <p>הצעה 2: ${formatNumberWithCommas(Math.round(totalFees2))} ₪</p>
+        <p><strong>סך ההוצאה האופטימלית:</strong> ${formatNumberWithCommas(Math.round(optimalTotalFees))} ₪</p>
+        <p><strong>המלצה:</strong></p>
+        ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
+                        <p>לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.</p>
+                <p>להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור לפייסבוק.</p>
+
+    `;
+
+    // יצירת הגרף
+    const ctx = document.getElementById('feeChart').getContext('2d');
+    if (myChart) {
+        myChart.destroy();
+    }
+    myChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({ length: years }, (_, i) => i + 1),
+            datasets: [
+                {
+                    label: document.getElementById('scenario1').textContent,
+                    data: fees1,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: true
+                },
+                {
+                    label: document.getElementById('scenario2').textContent,
+                    data: fees2,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Year' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Fees (₪)' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
                     }
                 }
-            }
-
-            // חישוב סך התשלום בתנאים אופטימליים
-            let optimalTotalFees;
-            if (crossingYear) {
-                let feesBeforeCrossing = fees2.slice(0, crossingYear).reduce((a, b) => a + b, 0);
-                let feesAfterCrossing = fees1.slice(crossingYear).reduce((a, b) => a + b, 0);
-                optimalTotalFees = feesBeforeCrossing + feesAfterCrossing;
-            } else {
-                optimalTotalFees = Math.min(totalFees1, totalFees2);
-            }
-
-            // Create the chart
-            const ctx = document.getElementById('feeChart').getContext('2d');
-            if (myChart) {
-                myChart.destroy();
-            }
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: Array.from({ length: years }, (_, i) => i + 1),
-                    datasets: [
-                        {
-                            label: document.getElementById('scenario1').textContent,
-                            data: fees1,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            fill: true
-                        },
-                        {
-                            label: document.getElementById('scenario2').textContent,
-                            data: fees2,
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                            fill: true
-                        }
-                    ]
-                },
-                options: {
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Year' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'Fees (₪)' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
-                            }
-                        }
-                    },
-                    maintainAspectRatio: false, // מאפשר לגודל הגרף להתאים עצמו
-                }
-            });
-
-            // Display total costs and recommendations
-            const totalCostsDiv = document.getElementById('totalCosts');
-            totalCostsDiv.innerHTML = `
-                <p><strong>סך ההוצאה לאורך 20 שנים:</strong></p>
-		<p>הצעה 1: ${Math.round(totalFees1)} ₪</p>
-		<p>הצעה 2: ${Math.round(totalFees2)} ₪</p>
-		<p><strong>סך ההוצאה האופטימלית:</strong> ${Math.round(optimalTotalFees)} ₪</p>
-                <p><strong>המלצה:</strong></p>
-                ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
-                <p>לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.</p>
-                <p>להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור לפייסבוק.</p>
-            `;
-
-            // עדכון שמות הצירים בהתאם לשפה הנבחרת לאחר יצירת הגרף
-            setLanguage(document.body.style.direction === 'rtl' ? 'he' : 'en');
+            },
+            maintainAspectRatio: false, // מאפשר לגודל הגרף להתאים עצמו
         }
+    });
+
+    // עדכון שמות הצירים בהתאם לשפה הנבחרת לאחר יצירת הגרף
+    setLanguage(document.body.style.direction === 'rtl' ? 'he' : 'en');
+}
+
+
 
         function getRecommendation(fees1, fees2, optimalFees, crossingYear) {
             let recommendationText = '';
