@@ -284,14 +284,12 @@ function setLanguage(lang) {
     
     document.getElementById('lang-he').classList.toggle('active', isHebrew);
     document.getElementById('lang-en').classList.toggle('active', !isHebrew);
+
+    // קריאה מחדש לפונקציה calculateFees כדי לעדכן את התוצאות בשפה החדשה
+    calculateFees(lang);
 }
 
-
-function formatNumberWithCommas(num) {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function calculateFees() {
+function calculateFees(lang = 'he') {
     // Get inputs
     const initialBalance = parseFloat(document.getElementById('initialBalance').value);
     const monthlyDeposit = parseFloat(document.getElementById('monthlyDeposit').value);
@@ -303,7 +301,6 @@ function calculateFees() {
     const years = 20;
     const monthsPerYear = 12;
     
-    // Initialize arrays for chart
     let fees1 = [];
     let fees2 = [];
     
@@ -345,16 +342,23 @@ function calculateFees() {
     }
 
     const totalCostsDiv = document.getElementById('totalCosts');
-    totalCostsDiv.innerHTML = `
-        <p><strong>סך ההוצאה לאורך 20 שנים:</strong></p>
-        <p>הצעה 1: ${formatNumberWithCommas(Math.round(totalFees1))} ₪</p>
-        <p>הצעה 2: ${formatNumberWithCommas(Math.round(totalFees2))} ₪</p>
-        <p><strong>סך ההוצאה האופטימלית:</strong> ${formatNumberWithCommas(Math.round(optimalTotalFees))} ₪</p>
-        <p><strong>המלצה:</strong></p>
-        ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
-                        <p>לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.</p>
-                <p>להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור.</p>
+    const textTotalCost = lang === 'he' ? 'סך ההוצאה לאורך 20 שנים' : 'Total cost over 20 years';
+    const textProposal1 = lang === 'he' ? 'הצעה 1' : 'Proposal 1';
+    const textProposal2 = lang === 'he' ? 'הצעה 2' : 'Proposal 2';
+    const textOptimal = lang === 'he' ? 'סך ההוצאה האופטימלית' : 'Optimal total cost';
+    const textRecommendation = lang === 'he' ? 'המלצה' : 'Recommendation';
+    const textFreeHelp = lang === 'he' ? 'לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.' : 'For free help with the calculator, click the WhatsApp link.';
+    const textFacebook = lang === 'he' ? 'להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור.' : 'To join our Facebook group, click on the link.';
 
+    totalCostsDiv.innerHTML = `
+        <p><strong>${textTotalCost}:</strong></p>
+        <p>${textProposal1}: ${formatNumberWithCommas(Math.round(totalFees1))} ₪</p>
+        <p>${textProposal2}: ${formatNumberWithCommas(Math.round(totalFees2))} ₪</p>
+        <p><strong>${textOptimal}:</strong> ${formatNumberWithCommas(Math.round(optimalTotalFees))} ₪</p>
+        <p><strong>${textRecommendation}:</strong></p>
+        ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear, lang)}
+        <p>${textFreeHelp}</p>
+        <p>${textFacebook}</p>
     `;
 
     // יצירת הגרף
@@ -388,23 +392,23 @@ function calculateFees() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Year' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
+                        text: lang === 'he' ? 'שנה' : 'Year'
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Fees (₪)' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
+                        text: lang === 'he' ? 'דמי ניהול (₪)' : 'Fees (₪)'
                     }
                 }
             },
-            maintainAspectRatio: false, // מאפשר לגודל הגרף להתאים עצמו
+            maintainAspectRatio: false, 
         }
     });
 
-    // עדכון שמות הצירים בהתאם לשפה הנבחרת לאחר יצירת הגרף
     setLanguage(document.body.style.direction === 'rtl' ? 'he' : 'en');
 }
+
 
 
 
