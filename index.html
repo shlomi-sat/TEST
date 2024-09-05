@@ -267,33 +267,21 @@ function setLanguage(lang) {
         'https://wa.me/972502638644?text=' + encodeURIComponent('אני זקוק לעזרה עם המחשבון.') : 
         'https://wa.me/972502638644?text=' + encodeURIComponent('I need help with the calculator.');
     
+    // עדכון שמות הצירים בהתאם לשפה הנבחרת
     if (myChart) {
         myChart.options.scales.x.title.text = isHebrew ? 'שנה' : 'Year';
         myChart.options.scales.y.title.text = isHebrew ? 'דמי ניהול (₪)' : 'Fees (₪)';
         myChart.update();
     }
 
-    // עדכון השפה של תוצאת החישוב אם כבר חושב
-    updateResultText(lang);
-
     document.getElementById('lang-he').classList.toggle('active', isHebrew);
     document.getElementById('lang-en').classList.toggle('active', !isHebrew);
+
+    // קריאה מחדש לפונקציה calculateFees כדי לעדכן את התוצאות בשפה הנבחרת
+    calculateFees(lang);
 }
 
-function updateResultText(lang) {
-    const isHebrew = lang === 'he';
-    const totalCostsDiv = document.getElementById('totalCosts');
-
-    const totalCostsP1 = totalCostsDiv.querySelector('p:nth-child(1)');
-    const totalCostsP5 = totalCostsDiv.querySelector('p:nth-child(5)');
-    const totalCostsP6 = totalCostsDiv.querySelector('p:nth-child(6)');
-
-    if (totalCostsP1) totalCostsP1.textContent = isHebrew ? 'סך ההוצאה לאורך 20 שנים:' : 'Total cost over 20 years:';
-    if (totalCostsP5) totalCostsP5.textContent = isHebrew ? 'לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.' : 'For free help with the calculator, click on the WhatsApp link.';
-    if (totalCostsP6) totalCostsP6.textContent = isHebrew ? 'להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור.' : 'To join our Facebook group, click on the link.';
-}
-
-function calculateFees() {
+function calculateFees(lang = 'he') {
     // Get inputs
     const initialBalance = parseFloat(document.getElementById('initialBalance').value);
     const monthlyDeposit = parseFloat(document.getElementById('monthlyDeposit').value);
@@ -305,7 +293,6 @@ function calculateFees() {
     const years = 20;
     const monthsPerYear = 12;
     
-    // Initialize arrays for chart
     let fees1 = [];
     let fees2 = [];
     
@@ -347,15 +334,23 @@ function calculateFees() {
     }
 
     const totalCostsDiv = document.getElementById('totalCosts');
+    const textTotalCost = lang === 'he' ? 'סך ההוצאה לאורך 20 שנים' : 'Total cost over 20 years';
+    const textProposal1 = lang === 'he' ? 'הצעה 1' : 'Proposal 1';
+    const textProposal2 = lang === 'he' ? 'הצעה 2' : 'Proposal 2';
+    const textOptimal = lang === 'he' ? 'סך ההוצאה האופטימלית' : 'Optimal total cost';
+    const textRecommendation = lang === 'he' ? 'המלצה' : 'Recommendation';
+    const textFreeHelp = lang === 'he' ? 'לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.' : 'For free help with the calculator, click the WhatsApp link.';
+    const textFacebook = lang === 'he' ? 'להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור.' : 'To join our Facebook group, click on the link.';
+
     totalCostsDiv.innerHTML = `
-        <p><strong>סך ההוצאה לאורך 20 שנים:</strong></p>
-        <p>הצעה 1: ${formatNumberWithCommas(Math.round(totalFees1))} ₪</p>
-        <p>הצעה 2: ${formatNumberWithCommas(Math.round(totalFees2))} ₪</p>
-        <p><strong>סך ההוצאה האופטימלית:</strong> ${formatNumberWithCommas(Math.round(optimalTotalFees))} ₪</p>
-        <p><strong>המלצה:</strong></p>
-        ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear)}
-        <p>לעזרה בחינם עם המחשבון, לחצו על הקישור לוואטסאפ.</p>
-        <p>להצטרפות לקבוצת הפייסבוק שלנו, לחצו על הקישור.</p>
+        <p><strong>${textTotalCost}:</strong></p>
+        <p>${textProposal1}: ${formatNumberWithCommas(Math.round(totalFees1))} ₪</p>
+        <p>${textProposal2}: ${formatNumberWithCommas(Math.round(totalFees2))} ₪</p>
+        <p><strong>${textOptimal}:</strong> ${formatNumberWithCommas(Math.round(optimalTotalFees))} ₪</p>
+        <p><strong>${textRecommendation}:</strong></p>
+        ${getRecommendation(totalFees1, totalFees2, optimalTotalFees, crossingYear, lang)}
+        <p>${textFreeHelp}</p>
+        <p>${textFacebook}</p>
     `;
 
     // יצירת הגרף
@@ -369,14 +364,14 @@ function calculateFees() {
             labels: Array.from({ length: years }, (_, i) => i + 1),
             datasets: [
                 {
-                    label: document.getElementById('scenario1').textContent,
+                    label: textProposal1,
                     data: fees1,
                     borderColor: 'rgba(255, 99, 132, 1)',
                     backgroundColor: 'rgba(255, 99, 132, 0.2)',
                     fill: true
                 },
                 {
-                    label: document.getElementById('scenario2').textContent,
+                    label: textProposal2,
                     data: fees2,
                     borderColor: 'rgba(54, 162, 235, 1)',
                     backgroundColor: 'rgba(54, 162, 235, 0.2)',
@@ -389,42 +384,39 @@ function calculateFees() {
                 x: {
                     title: {
                         display: true,
-                        text: 'שנה' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
+                        text: lang === 'he' ? 'שנה' : 'Year'
                     }
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'דמי ניהול (₪)' // ברירת מחדל - מתעדכן לפי השפה בפונקציה setLanguage
+                        text: lang === 'he' ? 'דמי ניהול (₪)' : 'Fees (₪)'
                     }
                 }
             },
-            maintainAspectRatio: false, // מאפשר לגודל הגרף להתאים עצמו
+            maintainAspectRatio: false, 
         }
     });
-
-    // עדכון שמות הצירים בהתאם לשפה הנבחרת לאחר יצירת הגרף
-    updateResultText(document.body.style.direction === 'rtl' ? 'he' : 'en');
 }
 
 function formatNumberWithCommas(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-function getRecommendation(fees1, fees2, optimalFees, crossingYear) {
+function getRecommendation(fees1, fees2, optimalFees, crossingYear, lang) {
     let recommendationText = '';
 
     if (crossingYear) {
         recommendationText += `
-            <p>המסלול האופטימלי הוא להתחיל בהצעה 2 ולעבור להצעה 1 בעוד ${crossingYear} שנים.</p>
-            <p>סך התשלום במקרה זה יהיה ${Math.round(optimalFees)} ₪.</p>
-            <p>בהשוואה להצעה 1 בלבד, יש חיסכון של ${Math.round(fees1 - optimalFees)} ₪.</p>
-            <p>בהשוואה להצעה 2 בלבד, יש חיסכון של ${Math.round(fees2 - optimalFees)} ₪.</p>
+            <p>${lang === 'he' ? 'המסלול האופטימלי הוא להתחיל בהצעה 2 ולעבור להצעה 1 בעוד' : 'The optimal path is to start with Proposal 2 and switch to Proposal 1 after'} ${crossingYear} ${lang === 'he' ? 'שנים.' : 'years.'}</p>
+            <p>${lang === 'he' ? 'סך התשלום במקרה זה יהיה' : 'Total payment in this case will be'} ${Math.round(optimalFees)} ₪.</p>
+            <p>${lang === 'he' ? 'בהשוואה להצעה 1 בלבד, יש חיסכון של' : 'Compared to Proposal 1, the saving is'} ${Math.round(fees1 - optimalFees)} ₪.</p>
+            <p>${lang === 'he' ? 'בהשוואה להצעה 2 בלבד, יש חיסכון של' : 'Compared to Proposal 2, the saving is'} ${Math.round(fees2 - optimalFees)} ₪.</p>
         `;
     } else {
-        let bestScenario = fees1 < fees2 ? 'הצעה 1' : 'הצעה 2';
+        let bestScenario = fees1 < fees2 ? (lang === 'he' ? 'הצעה 1' : 'Proposal 1') : (lang === 'he' ? 'הצעה 2' : 'Proposal 2');
         recommendationText += `
-            <p>המסלול שהכי טוב באופן עקבי הוא ${bestScenario}, עם סך תשלום של ${Math.round(Math.min(fees1, fees2))} ₪.</p>
+            <p>${lang === 'he' ? 'המסלול שהכי טוב באופן עקבי הוא' : 'The consistently best option is'} ${bestScenario}, ${lang === 'he' ? 'עם סך תשלום של' : 'with a total payment of'} ${Math.round(Math.min(fees1, fees2))} ₪.</p>
         `;
     }
 
@@ -434,33 +426,6 @@ function getRecommendation(fees1, fees2, optimalFees, crossingYear) {
 // Initialize with default language (Hebrew)
 setLanguage('he');
 
-
-
-
-
-        function getRecommendation(fees1, fees2, optimalFees, crossingYear) {
-            let recommendationText = '';
-
-            if (crossingYear) {
-                recommendationText += `
-                    <p>המסלול האופטימלי הוא להתחיל בהצעה 2 ולעבור להצעה 1 בעוד ${crossingYear} שנים.</p>
-<p>סך התשלום במקרה זה יהיה ${Math.round(optimalFees)} ₪.</p>
-		  <p>בהשוואה להצעה 1 בלבד, יש חיסכון של ${Math.round(fees1 - optimalFees)} ₪.</p>
-		  <p>בהשוואה להצעה 2 בלבד, יש חיסכון של ${Math.round(fees2 - optimalFees)} ₪.</p>
-                `;
-            } else {
-                let bestScenario = fees1 < fees2 ? 'הצעה 1' : 'הצעה 2';
-                recommendationText += `
-                    <p>המסלול שהכי טוב באופן עקבי הוא ${bestScenario}, עם סך תשלום של ${Math.round(Math.min(fees1, fees2))} ₪.</p>
-
-                `;
-            }
-
-            return recommendationText;
-        }
-
-        // Initialize with default language (Hebrew)
-        setLanguage('he');
     </script>
 </body>
 </html>
