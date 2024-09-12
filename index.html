@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מיקום, מהירויות, כיוון, Pitch ו-Roll ללא GPS</title>
+    <title>מיקום, מהירויות, כיוון ומצפן מתוקן</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
         .compass {
             width: 100%;
             height: 100%;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Compass.svg/1024px-Compass.svg.png');
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Compass_Card_Black.svg/1024px-Compass_Card_Black.svg.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
@@ -31,9 +31,9 @@
     </style>
 </head>
 <body>
-    <h1>מערכת ניווט ללא GPS</h1>
+    <h1>מערכת ניווט מתוקנת ללא GPS</h1>
 
-    <!-- טופס הזנת מיקום התחלתי -->
+    <!-- טופס להזנת מיקום התחלתי -->
     <form id="startLocationForm">
         <label for="startX">הכנס קואורדינטת X התחלתית:</label>
         <input type="number" id="startX" step="0.01" value="0"><br><br>
@@ -48,11 +48,11 @@
     <p>מהירות נוכחית:</p>
     <p>מהירות בציר X: <span id="velocityX">0</span> m/s | מהירות בציר Y: <span id="velocityY">0</span> m/s</p>
     
-    <p>כיוון: <span id="azimuth">0</span>°</p>
+    <p>כיוון (Heading): <span id="heading">0</span>°</p>
     
     <p>Pitch: <span id="pitch">0</span>° | Roll: <span id="roll">0</span>°</p>
 
-    <!-- מצפן שמסתובב בהתאם לאזימוט -->
+    <!-- מצפן שמסתובב בהתאם לכיוון הצפון -->
     <div class="compass-container">
         <div id="compass" class="compass"></div>
     </div>
@@ -63,13 +63,13 @@
         let currentY = 0;
         let velocityX = 0;
         let velocityY = 0;
-        let azimuth = 0;
+        let heading = 0;
         let pitch = 0;
         let roll = 0;
 
         // זמן בין מדידות (שניות)
         const dt = 0.05;
-        const THRESHOLD = 0.02; // סף להבדלים קטנים בתאוצה למניעת רעש
+        const THRESHOLD = 0.1; // סף להבדלים קטנים בתאוצה למניעת רעש
 
         // פונקציה לעדכון המיקום ההתחלתי מהטופס
         function setStartLocation() {
@@ -105,9 +105,9 @@
             const distanceX = velocityX * dt;
             const distanceY = velocityY * dt;
 
-            // עדכון המיקום לפי המרחק שעבר והכיוון (אזימוט)
-            currentX += distanceX * Math.cos(azimuth * Math.PI / 180);
-            currentY += distanceY * Math.sin(azimuth * Math.PI / 180);
+            // עדכון המיקום לפי המרחק שעבר והכיוון (Heading)
+            currentX += distanceX * Math.cos(heading * Math.PI / 180);
+            currentY += distanceY * Math.sin(heading * Math.PI / 180);
 
             // עדכון המידע על המסך
             document.getElementById('x').innerText = currentX.toFixed(2);
@@ -116,16 +116,16 @@
             document.getElementById('velocityY').innerText = velocityY.toFixed(2);
         });
 
-        // מאזין לאירועי מגנטומטר לחישוב כיוון (אזימוט)
+        // מאזין לאירועי מגנטומטר לחישוב כיוון (Heading)
         window.addEventListener('deviceorientation', (event) => {
-            azimuth = event.alpha;  // הכיוון המגנטי (אזימוט)
+            heading = event.alpha;  // הכיוון המגנטי (Heading)
 
             // עדכון המידע על המסך
-            document.getElementById('azimuth').innerText = azimuth.toFixed(2);
+            document.getElementById('heading').innerText = heading.toFixed(2);
 
-            // סיבוב המצפן בהתאם לאזימוט
+            // סיבוב המצפן בהתאם ל-Heading
             const compassElement = document.getElementById('compass');
-            compassElement.style.transform = `rotate(${-azimuth}deg)`;
+            compassElement.style.transform = `rotate(${-heading}deg)`;
         });
     </script>
 </body>
