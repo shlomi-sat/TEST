@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>חישוב זוויות Pitch ו-Roll בתנועה</title>
+    <title>חישוב זוויות Pitch ו-Roll בתנאי תאוצה קיצוניים</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,15 +13,20 @@
     </style>
 </head>
 <body>
-    <h1>חישוב זוויות Pitch ו-Roll בתנועה</h1>
+    <h1>חישוב זוויות Pitch ו-Roll בתנאי תאוצה קיצוניים</h1>
     <p>Pitch: <span id="pitch">0</span>°</p>
     <p>Roll: <span id="roll">0</span>°</p>
 
     <script>
+        // משתנים לאחסון זוויות הפילטר
         let pitch = 0, roll = 0;
-        const alpha = 0.98; // משקל לפילטר המשלים
-        const dt = 0.05; // פרק הזמן בין מדידות
+        const alpha = 0.98;  // קבוע הפילטר המשולב
+        const dt = 0.05;     // זמן בין מדידות (בשניות)
 
+        // רמות סף לזיהוי תאוצה קיצונית
+        const ACC_THRESHOLD = 1.5;  // סף לגילוי תאוצה גבוהה
+
+        // מאזין לאירועי תנועה מהמכשיר
         window.addEventListener('devicemotion', (event) => {
             // נתוני תאוצה כולל כבידה
             const accX = event.accelerationIncludingGravity.x;
@@ -32,15 +37,25 @@
             const gyroX = event.rotationRate.alpha; // מהירות זוויתית בציר X
             const gyroY = event.rotationRate.beta;  // מהירות זוויתית בציר Y
 
-            // חישוב זוויות בעזרת פילטר משולב
-            const pitchAcc = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
-            const rollAcc = Math.atan2(accY, accZ) * 180 / Math.PI;
+            // חישוב גודל התאוצה הכוללת
+            const accTotal = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
-            // התחשבות בתנוחה הסטטית (Acc) ובמהירות סיבובית (Gyro)
-            pitch = alpha * (pitch + gyroY * dt) + (1 - alpha) * pitchAcc;
-            roll = alpha * (roll + gyroX * dt) + (1 - alpha) * rollAcc;
+            // אם התאוצה גבוהה מסף מסוים, נסתמך יותר על הג'ירוסקופ
+            if (accTotal > ACC_THRESHOLD) {
+                // במצב של תאוצה גבוהה, נסתמך בעיקר על הג'ירוסקופ
+                pitch = pitch + gyroY * dt;
+                roll = roll + gyroX * dt;
+            } else {
+                // כאשר התאוצה יציבה, נשתמש בפילטר המשולב
+                const pitchAcc = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
+                const rollAcc = Math.atan2(accY, accZ) * 180 / Math.PI;
 
-            // הצגת הערכים
+                // פילטר משולב - שילוב בין הג'ירוסקופ והמד תאוצה
+                pitch = alpha * (pitch + gyroY * dt) + (1 - alpha) * pitchAcc;
+                roll = alpha * (roll + gyroX * dt) + (1 - alpha) * rollAcc;
+            }
+
+            // הצגת הערכים המעודכנים
             document.getElementById('pitch').innerText = pitch.toFixed(2);
             document.getElementById('roll').innerText = roll.toFixed(2);
         });
