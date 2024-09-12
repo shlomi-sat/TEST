@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>חישוב זוויות Pitch ו-Roll בתנאי תאוצה קיצוניים</title>
+    <title>חישוב זוויות Pitch, Roll ואזימוט</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,20 +13,18 @@
     </style>
 </head>
 <body>
-    <h1>חישוב זוויות Pitch ו-Roll בתנאי תאוצה קיצוניים</h1>
+    <h1>חישוב זוויות Pitch, Roll ואזימוט</h1>
     <p>Pitch: <span id="pitch">0</span>°</p>
     <p>Roll: <span id="roll">0</span>°</p>
+    <p>Azimuth: <span id="azimuth">0</span>°</p>
 
     <script>
-        // משתנים לאחסון זוויות הפילטר
-        let pitch = 0, roll = 0;
+        let pitch = 0, roll = 0, azimuth = 0;
         const alpha = 0.98;  // קבוע הפילטר המשולב
         const dt = 0.05;     // זמן בין מדידות (בשניות)
-
-        // רמות סף לזיהוי תאוצה קיצונית
         const ACC_THRESHOLD = 1.5;  // סף לגילוי תאוצה גבוהה
 
-        // מאזין לאירועי תנועה מהמכשיר
+        // מאזין לאירועים מחיישני תנועה ושדה מגנטי
         window.addEventListener('devicemotion', (event) => {
             // נתוני תאוצה כולל כבידה
             const accX = event.accelerationIncludingGravity.x;
@@ -37,27 +35,35 @@
             const gyroX = event.rotationRate.alpha; // מהירות זוויתית בציר X
             const gyroY = event.rotationRate.beta;  // מהירות זוויתית בציר Y
 
-            // חישוב גודל התאוצה הכוללת
+            // חישוב תאוצה כוללת
             const accTotal = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
 
-            // אם התאוצה גבוהה מסף מסוים, נסתמך יותר על הג'ירוסקופ
+            // חישוב Pitch ו-Roll על בסיס ג'ירוסקופ ותאוצה
             if (accTotal > ACC_THRESHOLD) {
-                // במצב של תאוצה גבוהה, נסתמך בעיקר על הג'ירוסקופ
+                // הסתמכות על הג'ירוסקופ במצב של תאוצה גבוהה
                 pitch = pitch + gyroY * dt;
                 roll = roll + gyroX * dt;
             } else {
-                // כאשר התאוצה יציבה, נשתמש בפילטר המשולב
+                // שילוב תאוצה וג'ירוסקופ בעזרת פילטר משולב
                 const pitchAcc = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
                 const rollAcc = Math.atan2(accY, accZ) * 180 / Math.PI;
-
-                // פילטר משולב - שילוב בין הג'ירוסקופ והמד תאוצה
+                
                 pitch = alpha * (pitch + gyroY * dt) + (1 - alpha) * pitchAcc;
                 roll = alpha * (roll + gyroX * dt) + (1 - alpha) * rollAcc;
             }
 
-            // הצגת הערכים המעודכנים
+            // עדכון DOM עם Pitch ו-Roll
             document.getElementById('pitch').innerText = pitch.toFixed(2);
             document.getElementById('roll').innerText = roll.toFixed(2);
+        });
+
+        // מאזין לאירועים מהמגנטומטר לחישוב האזימוט
+        window.addEventListener('deviceorientation', (event) => {
+            // חישוב אזימוט (כיוון צפוני)
+            azimuth = event.alpha;  // הזווית בציר ה-Z שנותנת את הכיוון לצפון מגנטי
+
+            // הצגת האזימוט
+            document.getElementById('azimuth').innerText = azimuth.toFixed(2);
         });
     </script>
 </body>
