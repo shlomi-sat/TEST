@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מיקום, מהירויות, כיוון ומצפן ללא GPS</title>
+    <title>מיקום, מהירויות, כיוון, Pitch ו-Roll ללא GPS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
         .compass {
             width: 100%;
             height: 100%;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Compass_Rose_English_North.svg/1024px-Compass_Rose_English_North.svg.png');
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Compass.svg/1024px-Compass.svg.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
@@ -32,7 +32,7 @@
 </head>
 <body>
     <h1>מערכת ניווט ללא GPS</h1>
-    
+
     <!-- טופס הזנת מיקום התחלתי -->
     <form id="startLocationForm">
         <label for="startX">הכנס קואורדינטת X התחלתית:</label>
@@ -44,9 +44,13 @@
 
     <p>מיקום נוכחי:</p>
     <p>X: <span id="x">0</span> | Y: <span id="y">0</span></p>
+    
     <p>מהירות נוכחית:</p>
     <p>מהירות בציר X: <span id="velocityX">0</span> m/s | מהירות בציר Y: <span id="velocityY">0</span> m/s</p>
+    
     <p>כיוון: <span id="azimuth">0</span>°</p>
+    
+    <p>Pitch: <span id="pitch">0</span>° | Roll: <span id="roll">0</span>°</p>
 
     <!-- מצפן שמסתובב בהתאם לאזימוט -->
     <div class="compass-container">
@@ -60,9 +64,12 @@
         let velocityX = 0;
         let velocityY = 0;
         let azimuth = 0;
+        let pitch = 0;
+        let roll = 0;
 
         // זמן בין מדידות (שניות)
         const dt = 0.05;
+        const THRESHOLD = 0.02; // סף להבדלים קטנים בתאוצה למניעת רעש
 
         // פונקציה לעדכון המיקום ההתחלתי מהטופס
         function setStartLocation() {
@@ -76,15 +83,23 @@
             document.getElementById('y').innerText = currentY.toFixed(2);
         }
 
-        // מאזין לאירועי תנועה לחישוב מהירות ומיקום
+        // מאזין לאירועי תנועה לחישוב מהירות, מיקום, Pitch ו-Roll
         window.addEventListener('devicemotion', (event) => {
-            // נתוני תאוצה
+            // נתוני תאוצה כולל כבידה
             const accX = event.accelerationIncludingGravity.x;
             const accY = event.accelerationIncludingGravity.y;
+            const accZ = event.accelerationIncludingGravity.z;
+
+            // חישוב Pitch ו-Roll
+            pitch = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
+            roll = Math.atan2(accY, accZ) * 180 / Math.PI;
+
+            document.getElementById('pitch').innerText = pitch.toFixed(2);
+            document.getElementById('roll').innerText = roll.toFixed(2);
 
             // חישוב מהירות בצירי X ו-Y (אינטגרציה של התאוצה)
-            velocityX += accX * dt;
-            velocityY += accY * dt;
+            if (Math.abs(accX) > THRESHOLD) velocityX += accX * dt;
+            if (Math.abs(accY) > THRESHOLD) velocityY += accY * dt;
 
             // חישוב המרחק שעבר המכשיר בכל ציר (אינטגרציה של המהירות)
             const distanceX = velocityX * dt;
