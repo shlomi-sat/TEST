@@ -3,67 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>חישוב זוויות Pitch, Roll ואזימוט</title>
+    <title>מיקום, מהירויות, כיוון ומצפן ללא GPS</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
         }
+
+        .compass-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+        }
+
+        .compass {
+            width: 100%;
+            height: 100%;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Compass_Rose_English_North.svg/1024px-Compass_Rose_English_North.svg.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 0.5s ease-out;
+        }
+
     </style>
 </head>
 <body>
-    <h1>חישוב זוויות Pitch, Roll ואזימוט</h1>
-    <p>Pitch: <span id="pitch">0</span>°</p>
-    <p>Roll: <span id="roll">0</span>°</p>
-    <p>Azimuth: <span id="azimuth">0</span>°</p>
+    <h1>מערכת ניווט ללא GPS</h1>
+    
+    <!-- טופס הזנת מיקום התחלתי -->
+    <form id="startLocationForm">
+        <label for="startX">הכנס קואורדינטת X התחלתית:</label>
+        <input type="number" id="startX" step="0.01" value="0"><br><br>
+        <label for="startY">הכנס קואורדינטת Y התחלתית:</label>
+        <input type="number" id="startY" step="0.01" value="0"><br><br>
+        <button type="button" onclick="setStartLocation()">עדכן מיקום התחלתי</button>
+    </form>
+
+    <p>מיקום נוכחי:</p>
+    <p>X: <span id="x">0</span> | Y: <span id="y">0</span></p>
+    <p>מהירות נוכחית:</p>
+    <p>מהירות בציר X: <span id="velocityX">0</span> m/s | מהירות בציר Y: <span id="velocityY">0</span> m/s</p>
+    <p>כיוון: <span id="azimuth">0</span>°</p>
+
+    <!-- מצפן שמסתובב בהתאם לאזימוט -->
+    <div class="compass-container">
+        <div id="compass" class="compass"></div>
+    </div>
 
     <script>
-        let pitch = 0, roll = 0, azimuth = 0;
-        const alpha = 0.98;  // קבוע הפילטר המשולב
-        const dt = 0.05;     // זמן בין מדידות (בשניות)
-        const ACC_THRESHOLD = 1.5;  // סף לגילוי תאוצה גבוהה
+        // משתנים למיקום ומהירות נוכחיים
+        let currentX = 0;
+        let currentY = 0;
+        let velocityX = 0;
+        let velocityY = 0;
+        let azimuth = 0;
 
-        // מאזין לאירועים מחיישני תנועה ושדה מגנטי
+        // זמן בין מדידות (שניות)
+        const dt = 0.05;
+
+        // פונקציה לעדכון המיקום ההתחלתי מהטופס
+        function setStartLocation() {
+            const startX = parseFloat(document.getElementById('startX').value);
+            const startY = parseFloat(document.getElementById('startY').value);
+            currentX = startX;
+            currentY = startY;
+
+            // עדכון המיקום ההתחלתי על המסך
+            document.getElementById('x').innerText = currentX.toFixed(2);
+            document.getElementById('y').innerText = currentY.toFixed(2);
+        }
+
+        // מאזין לאירועי תנועה לחישוב מהירות ומיקום
         window.addEventListener('devicemotion', (event) => {
-            // נתוני תאוצה כולל כבידה
+            // נתוני תאוצה
             const accX = event.accelerationIncludingGravity.x;
             const accY = event.accelerationIncludingGravity.y;
-            const accZ = event.accelerationIncludingGravity.z;
 
-            // נתוני ג'ירוסקופ - מהירות זוויתית
-            const gyroX = event.rotationRate.alpha; // מהירות זוויתית בציר X
-            const gyroY = event.rotationRate.beta;  // מהירות זוויתית בציר Y
+            // חישוב מהירות בצירי X ו-Y (אינטגרציה של התאוצה)
+            velocityX += accX * dt;
+            velocityY += accY * dt;
 
-            // חישוב תאוצה כוללת
-            const accTotal = Math.sqrt(accX * accX + accY * accY + accZ * accZ);
+            // חישוב המרחק שעבר המכשיר בכל ציר (אינטגרציה של המהירות)
+            const distanceX = velocityX * dt;
+            const distanceY = velocityY * dt;
 
-            // חישוב Pitch ו-Roll על בסיס ג'ירוסקופ ותאוצה
-            if (accTotal > ACC_THRESHOLD) {
-                // הסתמכות על הג'ירוסקופ במצב של תאוצה גבוהה
-                pitch = pitch + gyroY * dt;
-                roll = roll + gyroX * dt;
-            } else {
-                // שילוב תאוצה וג'ירוסקופ בעזרת פילטר משולב
-                const pitchAcc = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
-                const rollAcc = Math.atan2(accY, accZ) * 180 / Math.PI;
-                
-                pitch = alpha * (pitch + gyroY * dt) + (1 - alpha) * pitchAcc;
-                roll = alpha * (roll + gyroX * dt) + (1 - alpha) * rollAcc;
-            }
+            // עדכון המיקום לפי המרחק שעבר והכיוון (אזימוט)
+            currentX += distanceX * Math.cos(azimuth * Math.PI / 180);
+            currentY += distanceY * Math.sin(azimuth * Math.PI / 180);
 
-            // עדכון DOM עם Pitch ו-Roll
-            document.getElementById('pitch').innerText = pitch.toFixed(2);
-            document.getElementById('roll').innerText = roll.toFixed(2);
+            // עדכון המידע על המסך
+            document.getElementById('x').innerText = currentX.toFixed(2);
+            document.getElementById('y').innerText = currentY.toFixed(2);
+            document.getElementById('velocityX').innerText = velocityX.toFixed(2);
+            document.getElementById('velocityY').innerText = velocityY.toFixed(2);
         });
 
-        // מאזין לאירועים מהמגנטומטר לחישוב האזימוט
+        // מאזין לאירועי מגנטומטר לחישוב כיוון (אזימוט)
         window.addEventListener('deviceorientation', (event) => {
-            // חישוב אזימוט (כיוון צפוני)
-            azimuth = event.alpha;  // הזווית בציר ה-Z שנותנת את הכיוון לצפון מגנטי
+            azimuth = event.alpha;  // הכיוון המגנטי (אזימוט)
 
-            // הצגת האזימוט
+            // עדכון המידע על המסך
             document.getElementById('azimuth').innerText = azimuth.toFixed(2);
+
+            // סיבוב המצפן בהתאם לאזימוט
+            const compassElement = document.getElementById('compass');
+            compassElement.style.transform = `rotate(${-azimuth}deg)`;
         });
     </script>
 </body>
