@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מיקום, מהירויות, כיוון ומצפן מתוקן</title>
+    <title>מצפן ותיקוני מיקום</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -31,7 +31,7 @@
     </style>
 </head>
 <body>
-    <h1>מערכת ניווט מתוקנת ללא GPS</h1>
+    <h1>מצפן, מהירויות ומיקום</h1>
 
     <!-- טופס להזנת מיקום התחלתי -->
     <form id="startLocationForm">
@@ -117,7 +117,7 @@
         });
 
         // מאזין לאירועי מגנטומטר לחישוב כיוון (Heading)
-        window.addEventListener('deviceorientation', (event) => {
+        window.addEventListener('deviceorientationabsolute', (event) => {
             heading = event.alpha;  // הכיוון המגנטי (Heading)
 
             // עדכון המידע על המסך
