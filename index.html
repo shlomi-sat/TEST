@@ -2,131 +2,268 @@
 <html lang="he">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>מצפן ותיקוני מיקום</title>
+    <title>מחשבון נסיעה במונית</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            direction: rtl;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
             text-align: center;
-            margin-top: 50px;
         }
-
-        .compass-container {
-            position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 20px auto;
-        }
-
-        .compass {
+        table {
             width: 100%;
-            height: 100%;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Compass_Card_Black.svg/1024px-Compass_Card_Black.svg.png');
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            transition: transform 0.5s ease-out;
+            margin-bottom: 20px;
+            border-collapse: collapse;
         }
-
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        form {
+            background-color: #fff;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 20px;
+            padding: 12px 20px;
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+            cursor: pointer;
+        }
+        #result {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        #result strong {
+            font-size: 18px;
+        }
+        /* הגדרות עבור המפה */
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>מצפן, מהירויות ומיקום</h1>
+    <h1>מחשבון נסיעה במונית</h1>
 
-    <!-- טופס להזנת מיקום התחלתי -->
-    <form id="startLocationForm">
-        <label for="startX">הכנס קואורדינטת X התחלתית:</label>
-        <input type="number" id="startX" step="0.01" value="0"><br><br>
-        <label for="startY">הכנס קואורדינטת Y התחלתית:</label>
-        <input type="number" id="startY" step="0.01" value="0"><br><br>
-        <button type="button" onclick="setStartLocation()">עדכן מיקום התחלתי</button>
+    <!-- טבלת תעריפים בסיסיים -->
+    <h2>תעריפים בסיסיים ושעות</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>אזור</th>
+                <th>תעריף</th>
+                <th>שעות תעריף</th>
+                <th>פתיחת מונה (₪)</th>
+                <th>תעריף לק"מ (₪)</th>
+                <th>תעריף לדקה (₪)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>ארצי</td><td>תעריף א'</td><td>6:00 - 21:00</td><td>12.20</td><td>1.91</td><td>1.91</td></tr>
+            <tr><td>ארצי</td><td>תעריף ב'</td><td>21:01 - 23:00</td><td>12.20</td><td>2.29</td><td>2.29</td></tr>
+            <tr><td>ארצי</td><td>תעריף ג' (לילה)</td><td>23:01 - 6:00</td><td>12.20</td><td>2.67</td><td>2.67</td></tr>
+            <tr><td>אילת</td><td>תעריף א'</td><td>6:00 - 21:00</td><td>10.42</td><td>1.63</td><td>1.63</td></tr>
+            <tr><td>אילת</td><td>תעריף ב'</td><td>21:01 - 23:00</td><td>10.42</td><td>1.95</td><td>1.95</td></tr>
+            <tr><td>אילת</td><td>תעריף ג' (לילה)</td><td>23:01 - 6:00</td><td>10.42</td><td>2.29</td><td>2.29</td></tr>
+        </tbody>
+    </table>
+
+    <!-- טבלת תוספות לתעריפים -->
+    <h2>תוספות לתעריפים</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>סעיף</th>
+                <th>תוספת (₪)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>נסיעה מנתב"ג</td><td>5.00</td></tr>
+            <tr><td>נסיעה מנמל תעופה רמון או חיפה</td><td>2.00</td></tr>
+            <tr><td>נסיעה בכביש 6 (למעט קטע 18)</td><td>19.44</td></tr>
+            <tr><td>נסיעה בקטע 18 של כביש 6</td><td>7.07</td></tr>
+            <tr><td>נסיעה במנהרות הכרמל (מקטע אחד)</td><td>11.11</td></tr>
+            <tr><td>נסיעה במנהרות הכרמל (שני מקטעים)</td><td>22.22</td></tr>
+            <tr><td>תוספת המתנה לשעה בתעריף א'</td><td>113.99</td></tr>
+            <tr><td>תוספת המתנה לשעה בתעריף ב'</td><td>137.21</td></tr>
+            <tr><td>תוספת המתנה לשעה בתעריף ג'</td><td>160.43</td></tr>
+        </tbody>
+    </table>
+
+    <form id="taxiForm">
+        <label for="pickup">כתובת איסוף:</label>
+        <input type="text" id="pickup" name="pickup" value="המלך דוד 23, ירושלים, ישראל" required>
+
+        <label for="dropoff">כתובת יעד:</label>
+        <input type="text" id="dropoff" name="dropoff" value="העצמאות 5, חיפה, ישראל" required>
+
+        <label for="datetime">זמן איסוף:</label>
+        <input type="datetime-local" id="datetime" name="datetime" value="2024-09-23T20:30" required>
+
+        <label for="waiting">האם יש נקודת המתנה (ברירת מחדל 30 דקות):</label>
+        <input type="checkbox" id="waitingCheck" checked>
+        <input type="number" id="waitingTime" name="waitingTime" value="30" min="0" max="60" step="1"> דקות
+
+        <button type="submit">חשב מחיר נסיעה</button>
     </form>
 
-    <p>מיקום נוכחי:</p>
-    <p>X: <span id="x">0</span> | Y: <span id="y">0</span></p>
-    
-    <p>מהירות נוכחית:</p>
-    <p>מהירות בציר X: <span id="velocityX">0</span> m/s | מהירות בציר Y: <span id="velocityY">0</span> m/s</p>
-    
-    <p>כיוון (Heading): <span id="heading">0</span>°</p>
-    
-    <p>Pitch: <span id="pitch">0</span>° | Roll: <span id="roll">0</span>°</p>
+    <div id="result"></div>
 
-    <!-- מצפן שמסתובב בהתאם לכיוון הצפון -->
-    <div class="compass-container">
-        <div id="compass" class="compass"></div>
-    </div>
+    <!-- אלמנט המפה להצגת נתיב הנסיעה -->
+    <div id="map"></div>
+
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCJG-5Xym2zs6arS70V0jDl39clWhvoTWY&callback=initMap&libraries=places,directions">
+    </script>
 
     <script>
-        // משתנים למיקום ומהירות נוכחיים
-        let currentX = 0;
-        let currentY = 0;
-        let velocityX = 0;
-        let velocityY = 0;
-        let heading = 0;
-        let pitch = 0;
-        let roll = 0;
+        var map, directionsService, directionsRenderer, directionsRendererAlt, autocompletePickup, autocompleteDropoff;
 
-        // זמן בין מדידות (שניות)
-        const dt = 0.05;
-        const THRESHOLD = 0.1; // סף להבדלים קטנים בתאוצה למניעת רעש
+        function initMap() {
+            // יצירת המפה והגדרות ברירת מחדל
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 7,
+                center: {lat: 31.7683, lng: 35.2137} // מרכז המפה לירושלים
+            });
 
-        // פונקציה לעדכון המיקום ההתחלתי מהטופס
-        function setStartLocation() {
-            const startX = parseFloat(document.getElementById('startX').value);
-            const startY = parseFloat(document.getElementById('startY').value);
-            currentX = startX;
-            currentY = startY;
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
 
-            // עדכון המיקום ההתחלתי על המסך
-            document.getElementById('x').innerText = currentX.toFixed(2);
-            document.getElementById('y').innerText = currentY.toFixed(2);
+            directionsRendererAlt = new google.maps.DirectionsRenderer({ polylineOptions: { strokeColor: 'blue' } });
+            directionsRendererAlt.setMap(map);
+
+            // הגדרת השלמה אוטומטית לכתובות
+            var pickupInput = document.getElementById('pickup');
+            var dropoffInput = document.getElementById('dropoff');
+            autocompletePickup = new google.maps.places.Autocomplete(pickupInput);
+            autocompleteDropoff = new google.maps.places.Autocomplete(dropoffInput);
+
+            document.getElementById('taxiForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                calculateAndDisplayRoute();
+            });
         }
 
-        // מאזין לאירועי תנועה לחישוב מהירות, מיקום, Pitch ו-Roll
-        window.addEventListener('devicemotion', (event) => {
-            // נתוני תאוצה כולל כבידה
-            const accX = event.accelerationIncludingGravity.x;
-            const accY = event.accelerationIncludingGravity.y;
-            const accZ = event.accelerationIncludingGravity.z;
+        function calculateAndDisplayRoute() {
+            var pickup = document.getElementById('pickup').value;
+            var dropoff = document.getElementById('dropoff').value;
+            var datetime = new Date(document.getElementById('datetime').value);
+            var waitingTime = document.getElementById('waitingCheck').checked ? parseFloat(document.getElementById('waitingTime').value) : 0;
 
-            // חישוב Pitch ו-Roll
-            pitch = Math.atan2(accX, Math.sqrt(accY * accY + accZ * accZ)) * 180 / Math.PI;
-            roll = Math.atan2(accY, accZ) * 180 / Math.PI;
+            if (!pickup || !dropoff || !datetime) {
+                alert('נא למלא את כל השדות');
+                return;
+            }
 
-            document.getElementById('pitch').innerText = pitch.toFixed(2);
-            document.getElementById('roll').innerText = roll.toFixed(2);
+            // חישוב מסלול עם כביש 6
+            directionsService.route({
+                origin: pickup,
+                destination: dropoff,
+                travelMode: 'DRIVING',
+                avoidTolls: false // כוללים כביש 6
+            }, function(response, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
 
-            // חישוב מהירות בצירי X ו-Y (אינטגרציה של התאוצה)
-            if (Math.abs(accX) > THRESHOLD) velocityX += accX * dt;
-            if (Math.abs(accY) > THRESHOLD) velocityY += accY * dt;
+                    // חישוב עלות הנסיעה עם כביש 6
+                    var legs = response.routes[0].legs[0];
+                    var distanceInMeters = legs.distance.value;
+                    var durationInSeconds = legs.duration.value;
+                    var distanceInKm = distanceInMeters / 1000;
+                    var durationInMinutes = durationInSeconds / 60;
 
-            // חישוב המרחק שעבר המכשיר בכל ציר (אינטגרציה של המהירות)
-            const distanceX = velocityX * dt;
-            const distanceY = velocityY * dt;
+                    var tariff = getTariff(datetime);
+                    var ratesForArea = {
+                        initialFare: 12.20,
+                        ratePerKm: tariff === 'A' ? 1.91 : tariff === 'B' ? 2.29 : 2.67,
+                        ratePerMinute: tariff === 'A' ? 1.91 : tariff === 'B' ? 2.29 : 2.67,
+                        waitingRate: tariff === 'A' ? 113.99 : tariff === 'B' ? 137.21 : 160.43
+                    };
 
-            // עדכון המיקום לפי המרחק שעבר והכיוון (Heading)
-            currentX += distanceX * Math.cos(heading * Math.PI / 180);
-            currentY += distanceY * Math.sin(heading * Math.PI / 180);
+                    var baseFareWithToll = ratesForArea.initialFare + (distanceInKm * ratesForArea.ratePerKm) + (durationInMinutes * ratesForArea.ratePerMinute);
+                    if (waitingTime > 0) {
+                        baseFareWithToll += (waitingTime * (ratesForArea.waitingRate / 60));
+                    }
+                    // הוספת תוספת לכביש 6
+                    baseFareWithToll += 19.44; // תוספת לכביש 6
 
-            // עדכון המידע על המסך
-            document.getElementById('x').innerText = currentX.toFixed(2);
-            document.getElementById('y').innerText = currentY.toFixed(2);
-            document.getElementById('velocityX').innerText = velocityX.toFixed(2);
-            document.getElementById('velocityY').innerText = velocityY.toFixed(2);
-        });
+                    // חישוב מסלול בלי כביש 6
+                    directionsService.route({
+                        origin: pickup,
+                        destination: dropoff,
+                        travelMode: 'DRIVING',
+                        avoidTolls: true // בלי כביש 6
+                    }, function(responseAlt, statusAlt) {
+                        if (statusAlt === 'OK') {
+                            directionsRendererAlt.setDirections(responseAlt);
 
-        // מאזין לאירועי מגנטומטר לחישוב כיוון (Heading)
-        window.addEventListener('deviceorientationabsolute', (event) => {
-            heading = event.alpha;  // הכיוון המגנטי (Heading)
+                            var legsAlt = responseAlt.routes[0].legs[0];
+                            var distanceInKmAlt = legsAlt.distance.value / 1000;
+                            var durationInMinutesAlt = legsAlt.duration.value / 60;
 
-            // עדכון המידע על המסך
-            document.getElementById('heading').innerText = heading.toFixed(2);
+                            var baseFareWithoutToll = ratesForArea.initialFare + (distanceInKmAlt * ratesForArea.ratePerKm) + (durationInMinutesAlt * ratesForArea.ratePerMinute);
+                            if (waitingTime > 0) {
+                                baseFareWithoutToll += (waitingTime * (ratesForArea.waitingRate / 60));
+                            }
 
-            // סיבוב המצפן בהתאם ל-Heading
-            const compassElement = document.getElementById('compass');
-            compassElement.style.transform = `rotate(${-heading}deg)`;
-        });
+                            // הצגת סיכום לשתי האפשרויות
+                            document.getElementById('result').innerHTML = `
+                                <h2>סיכום הנסיעה:</h2>
+                                <p>המרחק הוא ${distanceInKm.toFixed(2)} ק"מ וזמן הנסיעה הוא ${durationInMinutes.toFixed(2)} דקות.</p>
+                                <p>מחיר הנסיעה כולל כביש 6: ${baseFareWithToll.toFixed(2)} ₪.</p>
+                                <p>מחיר הנסיעה ללא כביש 6: ${baseFareWithoutToll.toFixed(2)} ₪.</p>
+                            `;
+                        } else {
+                            alert('שגיאה בחישוב מסלול ללא כביש 6: ' + statusAlt);
+                        }
+                    });
+                } else {
+                    alert('שגיאה בחישוב המסלול: ' + status);
+                }
+            });
+        }
+
+        function getTariff(datetime) {
+            var hour = datetime.getHours();
+            return (hour >= 6 && hour < 21) ? 'A' : (hour >= 21 || hour < 6) ? 'B' : 'C';
+        }
     </script>
 </body>
 </html>
